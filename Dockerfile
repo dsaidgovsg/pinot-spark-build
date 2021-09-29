@@ -41,7 +41,7 @@ RUN set -euo pipefail && \
         -Dhadoop.version="${HADOOP_VERSION}"; \
     mkdir -p "${PINOT_HOME}/configs"; \
     mkdir -p "${PINOT_HOME}/data"; \
-    cp -r "pinot-distribution/target/apache-pinot-*-bin/apache-pinot-*-bin/*" "${PINOT_HOME}/."; \
+    cp -r pinot-distribution/target/apache-pinot-*-bin/apache-pinot-*-bin/* "${PINOT_HOME}/"; \
     chmod +x "${PINOT_HOME}/bin/*.sh"; \
     popd; \
     :
