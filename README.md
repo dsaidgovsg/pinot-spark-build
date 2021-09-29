@@ -1,5 +1,7 @@
 # Pinot with Spark build
 
+![CI Status](https://img.shields.io/github/workflow/status/dsaidgovsg/pinot-spark-build/CI/main?label=CI&logo=github&style=for-the-badge)
+
 Repository to build Pinot with Spark integration Docker images.
 
 The multi-stage build for the Dockerfile is adapted from
