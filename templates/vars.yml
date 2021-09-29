@@ -1,0 +1,9 @@
+self_version: 'v1'
+
+versions:
+- pinot:  ['0.8.0']
+  spark:  ['2.4.8']
+  java:   ['8']
+  hadoop: ['2.7.3']
+  scala:  ['2.12']
+  python: ['3.6', '3.7']
