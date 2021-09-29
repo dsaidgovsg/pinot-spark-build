@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - master
+    - v*
+  pull_request:
+    branches:
+    - master
+    - v*
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        version:
+        - pinot:  "0.8.0"
+          spark:  "2.4.8"
+          hadoop: "2.7.3"
+          scala:  "2.12"
+          java:   "8"
+          python: "3.6"
+        - pinot:  "0.8.0"
+          spark:  "2.4.8"
+          hadoop: "2.7.3"
+          scala:  "2.12"
+          java:   "8"
+          python: "3.7"
+    runs-on: ubuntu-20.04
+    env:
+      IMAGE_NAME: "pinot-spark"
+      SELF_VERSION: "v1"
+      PINOT_VERSION: "${{ matrix.version.pinot }}"
+      SPARK_VERSION: "${{ matrix.version.spark }}"
+      HADOOP_VERSION: "${{ matrix.version.hadoop }}"
+      SCALA_VERSION: "${{ matrix.version.scala }}"
+      JAVA_VERSION: "${{ matrix.version.java }}"
+      PYTHON_VERSION: "${{ matrix.version.python }}"
+    steps:
+    - name: Set global environment variables
+      run: |-
+        TAG_NAME="${SELF_VERSION}_${PINOT_VERSION}_spark-${SPARK_VERSION}_hadoop-${HADOOP_VERSION}_scala-${SCALA_VERSION}_java-${JAVA_VERSION}_python-${PYTHON_VERSION}"
+        echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Check Dockerlint linting
+      uses: hadolint/hadolint-action@v1.5.0
+      with:
+        dockerfile: Dockerfile
+        ignore: DL3008 DL3059 DL4006
+    - name: Check shell scripts
+      run: |-
+        shellcheck templates/apply-vars.sh
+        shellcheck push-images.sh
+    - name: Install tera-cli
+      run: |-
+        wget https://github.com/guangie88/tera-cli/releases/download/v0.4.1/tera-cli-v0.4.1-x86_64-unknown-linux-musl.tar.gz
+        tar xf tera-cli-*.tar.gz
+        mv tera-cli*/tera /tmp/tera
+        rm tera-cli-*.tar.gz
+    - name: Check differences between ci.yml and ci.yml.tmpl
+      run: |-
+        cp .github/workflows/ci.yml .github/workflows/ci.yml.backup
+        TERA=/tmp/tera ./templates/apply-vars.sh
+        if ! diff .github/workflows/ci.yml .github/workflows/ci.yml.backup; then echo "ci.yml.tmpl and ci.yml differs!" && exit 1; fi
+    - name: Build Docker image
+      run: |-
+        docker build . -t "${IMAGE_NAME}:${TAG_NAME}" \
+          --build-arg PINOT_VERSION=${PINOT_VERSION} \
+          --build-arg SPARK_VERSION=${SPARK_VERSION} \
+          --build-arg HADOOP_VERSION=${HADOOP_VERSION} \
+          --build-arg SCALA_VERSION=${SCALA_VERSION} \
+          --build-arg JAVA_VERSION=${JAVA_VERSION} \
+          --build-arg PYTHON_VERSION=${PYTHON_VERSION}
+    - name: Push Docker image
+      run: bash push-images.sh
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        IMAGE_ORG: ${{ secrets.IMAGE_ORG }}
+      if: github.event_name == 'push'
