@@ -14,7 +14,7 @@ integration contains Kubernetes integration.
 ## Check Dockerfile linting (`hadolint`)
 
 ```bash
-hadolint --ignore DL3008 --ignore DL3059 --ignore DL4006 Dockerfile
+hadolint --ignore DL3008 --ignore DL3059 --ignore DL4006 --ignore DL3002 Dockerfile
 ```
 
 Check <https://github.com/hadolint/hadolint> on how to install `hadolint`.
