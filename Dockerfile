@@ -39,10 +39,10 @@ RUN set -euo pipefail && \
         -Dscala.binary.version="${SCALA_VERSION}" \
         -Dspark.version="${SPARK_VERSION}" \
         -Dhadoop.version="${HADOOP_VERSION}"; \
-    mkdir -p "${PINOT_HOME}/configs"; \
-    mkdir -p "${PINOT_HOME}/data"; \
-    cp -r pinot-distribution/target/apache-pinot-*-bin/apache-pinot-*-bin/* "${PINOT_HOME}/"; \
-    chmod +x "${PINOT_HOME}/bin/*.sh"; \
+    mkdir -p ${PINOT_HOME}/configs; \
+    mkdir -p ${PINOT_HOME}/data; \
+    cp -r pinot-distribution/target/apache-pinot-*-bin/apache-pinot-*-bin/* ${PINOT_HOME}/.; \
+    chmod +x ${PINOT_HOME}/bin/*.sh; \
     popd; \
     :
 
@@ -50,6 +50,9 @@ FROM dsaidgovsg/spark-k8s-addons:v5_${SPARK_VERSION}_hadoop-${HADOOP_VERSION}_sc
 
 ENV PINOT_HOME=/opt/pinot
 ENV PINOT_VERSION="${PINOT_VERSION}"
+
+# pinot assumes root user
+USER root
 
 COPY --from=pinot_build_env ${PINOT_HOME} ${PINOT_HOME}
 COPY --from=pinot_build_env /opt/pinot-build/docker/images/pinot/bin ${PINOT_HOME}/bin
