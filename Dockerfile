@@ -30,6 +30,8 @@ RUN set -euo pipefail && \
     pushd /opt/pinot-build; \
     SCALA_LATEST_PATCH_VERSION="$(curl -s https://www.scala-lang.org/download/all.html | grep -oP "/download/${SCALA_VERSION}.\d+" | grep -o "${SCALA_VERSION}.*" | sort -Vr | head -n1)"; \
     CPU_CORES="$(grep -c processor /proc/cpuinfo)"; \
+    # This repo has "javac: invalid target release: 8u302" issue before, so good idea to print out the version
+    javac -version; \
     # We do not want to build v0_deprecated because those modules cause compile error
     mvn install package -DskipTests -Pbin-dist -Pbuild-shaded-jar \
         -pl -pinot-plugins/pinot-batch-ingestion/v0_deprecated/pinot-ingestion-common,-pinot-plugins/pinot-batch-ingestion/v0_deprecated/pinot-hadoop,-pinot-plugins/pinot-batch-ingestion/v0_deprecated/pinot-spark \
@@ -39,10 +41,10 @@ RUN set -euo pipefail && \
         -Dscala.binary.version="${SCALA_VERSION}" \
         -Dspark.version="${SPARK_VERSION}" \
         -Dhadoop.version="${HADOOP_VERSION}"; \
-    mkdir -p "${PINOT_HOME}/configs"; \
-    mkdir -p "${PINOT_HOME}/data"; \
-    cp -r "pinot-distribution/target/apache-pinot-*-bin/apache-pinot-*-bin/*" "${PINOT_HOME}/."; \
-    chmod +x "${PINOT_HOME}/bin/*.sh"; \
+    mkdir -p ${PINOT_HOME}/configs; \
+    mkdir -p ${PINOT_HOME}/data; \
+    cp -r pinot-distribution/target/apache-pinot-*-bin/apache-pinot-*-bin/* ${PINOT_HOME}/.; \
+    chmod +x ${PINOT_HOME}/bin/*.sh; \
     popd; \
     :
 
@@ -50,6 +52,9 @@ FROM dsaidgovsg/spark-k8s-addons:v5_${SPARK_VERSION}_hadoop-${HADOOP_VERSION}_sc
 
 ENV PINOT_HOME=/opt/pinot
 ENV PINOT_VERSION="${PINOT_VERSION}"
+
+# pinot assumes root user
+USER root
 
 COPY --from=pinot_build_env ${PINOT_HOME} ${PINOT_HOME}
 COPY --from=pinot_build_env /opt/pinot-build/docker/images/pinot/bin ${PINOT_HOME}/bin

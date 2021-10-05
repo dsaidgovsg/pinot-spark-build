@@ -3,11 +3,11 @@ name: CI
 on:
   push:
     branches:
-    - master
+    - main
     - v*
   pull_request:
     branches:
-    - master
+    - main
     - v*
 
 jobs:
@@ -58,7 +58,7 @@ jobs:
       uses: hadolint/hadolint-action@v1.5.0
       with:
         dockerfile: Dockerfile
-        ignore: DL3008 DL3059 DL4006
+        ignore: DL3008 DL3059 DL4006 DL3002
     - name: Check shell scripts
       run: |-
         shellcheck templates/apply-vars.sh
@@ -76,7 +76,8 @@ jobs:
         if ! diff .github/workflows/ci.yml .github/workflows/ci.yml.backup; then echo "ci.yml.tmpl and ci.yml differs!" && exit 1; fi
     - name: Build Docker image
       run: |-
-        docker build . -t "${IMAGE_NAME}:${TAG_NAME}" \
+        # Need DOCKER_BUILDKIT to fix "javac: invalid target release" issue
+        DOCKER_BUILDKIT=1 docker build . -t "${IMAGE_NAME}:${TAG_NAME}" \
           --build-arg PINOT_VERSION=${PINOT_VERSION} \
           --build-arg SPARK_VERSION=${SPARK_VERSION} \
           --build-arg HADOOP_VERSION=${HADOOP_VERSION} \
