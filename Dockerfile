@@ -30,6 +30,8 @@ RUN set -euo pipefail && \
     pushd /opt/pinot-build; \
     SCALA_LATEST_PATCH_VERSION="$(curl -s https://www.scala-lang.org/download/all.html | grep -oP "/download/${SCALA_VERSION}.\d+" | grep -o "${SCALA_VERSION}.*" | sort -Vr | head -n1)"; \
     CPU_CORES="$(grep -c processor /proc/cpuinfo)"; \
+    # This repo has "javac: invalid target release: 8u302" issue before, so good idea to print out the version
+    javac -version; \
     # We do not want to build v0_deprecated because those modules cause compile error
     mvn install package -DskipTests -Pbin-dist -Pbuild-shaded-jar \
         -pl -pinot-plugins/pinot-batch-ingestion/v0_deprecated/pinot-ingestion-common,-pinot-plugins/pinot-batch-ingestion/v0_deprecated/pinot-hadoop,-pinot-plugins/pinot-batch-ingestion/v0_deprecated/pinot-spark \
